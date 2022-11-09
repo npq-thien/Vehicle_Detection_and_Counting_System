@@ -1,79 +1,11 @@
-from track2 import *
+from track import *
 import tempfile
 import cv2
 import torch
 import streamlit as st
+import os
 
-if __name__ == '__main__':
-    st.title('Yolov5 with Deep SORT')
-
-    st.sidebar.title('Settings')
-
-    st.markdown(
-    """
-    <style>
-    [data-testid ="stSidebar"][aria-expanded="true" > div:first-child{ width: 400px;}
-    [data-testid ="stSidebar"][aria-expanded="false" > div:first-child{ width: 400px; margin-left: -400px}
-    </style> 
-    """,
-    unsafe_allow_html=True
-    )
-    st.sidebar.markdown('---')
-    confidence = st.sidebar.slider('Confidence', min_value=0.0, max_value=1.0, value=0.5)
-    st.sidebar.markdown('---')
-
-    save_img = st.sidebar.checkbox('Save video')
-    custom_class = st.sidebar.checkbox('Custom classes')
-    assigned_class_id = []
-    names = ['car', 'motorcycle','bus', 'truck']
-
-    # custom classes
-    if custom_class:
-        assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
-        for each in assigned_class:
-            assigned_class_id.append(names.index(each))
-
-    # upload video
-    video_file_buffer = st.sidebar.file_uploader("Upload a video", type=['mp4', 'mov', 'avi'])
-    DEMO_VIDEO = 'test.mp4'
-    tffile = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
-
-    # st.sidebar.text('Input video')
-    if not video_file_buffer:
-        vid = cv2.VideoCapture(DEMO_VIDEO)
-        tffile.name - DEMO_VIDEO
-        dem_video = open(tffile.name, 'rb')
-        demo_bytes = dem_video.read()
-
-        st.sidebar.text('Input video')
-        st.sidebar.video(demo_bytes)
-    else:
-        tffile.write(video_file_buffer.read())
-        dem_video = open(tffile.name, 'rb')
-        demo_bytes = dem_video.read()
-
-        st.sidebar.text('Input video')
-        st.sidebar.video(demo_bytes)
-    
-    stframe = st.empty()
-    st.sidebar.markdown('---')
-
-
-
-    kpi1, kpi2, kpi3 = st.columns(3)
-
-    with kpi1:
-        st.markdown('**Frame Rate**')
-        kpi1_text = st.markdown('0')
-    
-    with kpi2:
-        st.markdown('**Tracked object**')
-        kpi1_text = st.markdown('0')
-
-    with kpi3:
-        st.markdown('**Frame Rate**')
-        kpi1_text = st.markdown('0')
-
+def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--yolo_model', nargs='+', type=str, default='best_all.pt', help='model.pt path(s)')
     parser.add_argument('--deep_sort_model', type=str, default='osnet_x0_25')
@@ -101,32 +33,99 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
-    
-    opt.source = f'videos/{video_file_buffer.name}'
+    opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
+    return opt
+
+def reset_para():
+    return 1
+
+if __name__ == '__main__':
+    st.title('Yolov5 with Deep SORT')
+
+    # upload video
+    video_file_buffer = st.sidebar.file_uploader("Upload a video", type=['mp4', 'mov', 'avi'])
+    DEMO_VIDEO = 'test.mp4'
+    tffile = tempfile.NamedTemporaryFile(suffix='.mp4', delete=False)
     
     if video_file_buffer:
         tffile.write(video_file_buffer.read())
         dem_video = open(tffile.name, 'rb')
         demo_bytes = dem_video.read()
+        st.sidebar.text('Input video')
+        st.sidebar.video(demo_bytes)
 
-        st.video(demo_bytes)
+    st.sidebar.markdown('---')
+    st.sidebar.title('Settings')
 
-    # vid.release()
-    with torch.no_grad():
-        detect(opt)
+    # st.markdown(
+    # """
+    # <style>
+    # [data-testid ="stSidebar"][aria-expanded="true" > div:first-child{ width: 400px;}
+    # [data-testid = "stSidebar"][aria-expanded="false" > div:first-child{ width: 400px; margin-left: -400px}
+    # </style> 
+    # """,
+    # unsafe_allow_html=True
+    # )
     
-    # if source_index == 0:
-    #     video_file_buffer = st.sidebar.file_uploader(
-    #         "上传图片", type=['png', 'jpeg', 'jpg'])
-    #     if video_file_buffer is not None:
-    #         is_valid = True
-    #         with st.spinner(text='资源加载中...'):
-    #             st.sidebar.image(video_file_buffer)
-    #             picture = Image.open(video_file_buffer)
-    #             picture = picture.save(f'data/images/{video_file_buffer.name}')
-    #             opt.source = f'data/images/{video_file_buffer.name}'
-    #     else:
-    #         is_valid = False
-    # else:
+    confidence = st.sidebar.slider('Confidence', min_value=0.0, max_value=1.0, value=0.5)
+    line = st.sidebar.number_input('Line position', min_value=0.0, max_value=1.0, value=0.6, step=0.1)
+
+
+    st.sidebar.markdown('---')
+
+    custom_class = st.sidebar.checkbox('Custom classes')
+    assigned_class_id = []
+    names = ['car', 'motorcycle','bus', 'truck']
+
+    # custom classes
+    if custom_class:
+        assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
+        for each in assigned_class:
+            assigned_class_id.append(names.index(each))
     
+    stframe = st.empty()
+
+    if video_file_buffer is None:
+        st.markdown('`Waiting for input`')
+
+    car, bus, truck, motor = st.columns(4)
+
+    with car:
+        st.markdown('**Car**')
+        car_text = st.markdown('0')
     
+    with bus:
+        st.markdown('**Bus**')
+        bus_text = st.markdown('0')
+
+    with truck:
+        st.markdown('**Truck**')
+        truck_text = st.markdown('0')
+    
+    with motor:
+        st.markdown('**Motorcycle**')
+        motor_text = st.markdown('0')
+
+
+    if st.sidebar.button('Start tracking'):
+        opt = parse_opt()
+        opt.conf_thres = confidence
+        opt.source = f'videos/{video_file_buffer.name}'
+
+        with torch.no_grad():
+            detect(opt, stframe, car_text, bus_text, truck_text, motor_text, line)
+
+        st.markdown("**END**")
+
+    # reset ID and count from 0
+    if st.sidebar.button('RESET ID'):
+        reset()
+
+    
+    # output video
+    # if video_file_buffer:
+    #     tffile.write(video_file_buffer.read())
+    #     dem_video = open(tffile.name, 'rb')
+    #     demo_bytes = dem_video.read()
+
+    #     st.video(demo_bytes)

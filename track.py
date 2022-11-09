@@ -9,6 +9,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 import sys
 sys.path.insert(0, './yolov5')
 
+import streamlit as st
 import IPython
 import argparse
 import os
@@ -36,6 +37,7 @@ ROOT = FILE.parents[0]  # yolov5 deepsort root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
+
 # count_car, count_bus, count_truck = 0, 0, 0
 data_car = []
 data_bus = []
@@ -43,12 +45,15 @@ data_truck = []
 data_motor = []
 line_pos = 0.6
 
-def detect(opt):
+def detect(opt, stframe, car, bus, truck, motor, line):
     out, source, yolo_model, deep_sort_model, show_vid, save_vid, save_txt, imgsz, evaluate, half, project, name, exist_ok= \
         opt.output, opt.source, opt.yolo_model, opt.deep_sort_model, opt.show_vid, opt.save_vid, \
         opt.save_txt, opt.imgsz, opt.evaluate, opt.half, opt.project, opt.name, opt.exist_ok
     webcam = source == '0' or source.startswith(
         'rtsp') or source.startswith('http') or source.endswith('.txt')
+
+    line_pos = line
+    save_vid = True
     # initialize deepsort
     cfg = get_config()
     cfg.merge_from_file(opt.config_deepsort)
@@ -179,6 +184,7 @@ def detect(opt):
                         c = int(cls)  # integer class
                         label = f'{id} {names[c]} {conf:.2f}'
                         annotator.box_label(bboxes, label, color=colors(c, True))
+                        # count_obj(bboxes,w,h,id, names[c], data_car, data_bus, data_truck, data_motor)
                         count_obj(bboxes,w,h,id, names[c])
                         
                         if save_txt:
@@ -240,6 +246,12 @@ def detect(opt):
                     vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                 vid_writer.write(im0)
 
+                stframe.image(im0, channels="BGR", use_column_width=True)
+                car.write(str(len(data_car)))
+                bus.write(str(len(data_bus)))
+                truck.write(str(len(data_truck)))
+                motor.write(str(len(data_motor)))
+
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
     LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS, %.1fms deep sort update \
@@ -250,7 +262,7 @@ def detect(opt):
             os.system('open ' + save_path)
 
 def count_obj(box, w, h, id, label):
-    global data_car, data_bus, data_truck, line_pos
+    global data_car, data_bus, data_truck, data_motor, line_pos
     center_coordinates = (int(box[0]+(box[2]-box[0])/2) , int(box[1]+(box[3]-box[1])/2))
     if center_coordinates[1] > (h*line_pos):
         if label == 'car' and id not in data_car:
@@ -262,12 +274,19 @@ def count_obj(box, w, h, id, label):
         elif label == 'motorcycle' and id not in data_motor:
             data_motor.append(id)
 
+# reset id in data
+def reset():
+    global data_car, data_bus, data_truck, data_motor
+    data_car = []
+    data_bus = []
+    data_truck = []
+    data_motor = []
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--yolo_model', nargs='+', type=str, default='best_all.pt', help='model.pt path(s)')
     parser.add_argument('--deep_sort_model', type=str, default='osnet_x0_25')
-    parser.add_argument('--source', type=str, default='videos/Traffic.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='Traffic.mp4', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[480], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.5, help='object confidence threshold')

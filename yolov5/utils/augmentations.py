@@ -115,8 +115,8 @@ def letterbox(im, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleF
         new_shape = (new_shape, new_shape)
 
     # Scale ratio (new / old)
-    if (len(new_shape) == 1):
-        new_shape = (new_shape[0], new_shape[0])
+    # if (len(new_shape) == 1):
+    #     new_shape = (new_shape[0], new_shape[0])
     r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
     if not scaleup:  # only scale down, do not scale up (for better val mAP)
         r = min(r, 1.0)

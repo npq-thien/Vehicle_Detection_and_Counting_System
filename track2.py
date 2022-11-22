@@ -85,16 +85,13 @@ def detect(weights=ROOT / 'best_all.pt',  # model.pt path(s)
     # save_img = not nosave and not source.endswith('.txt')  # save inference images
     # webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
     #     ('rtsp://', 'rtmp://', 'http://', 'https://'))
-
     ## initialize deepsort
     cfg = get_config()
     cfg.merge_from_file(config_deepsort)
-    deepsort = DeepSort(config_deepsort,
-                        max_dist=cfg.DEEPSORT.MAX_DIST, min_confidence=cfg.DEEPSORT.MIN_CONFIDENCE,
-                        nms_max_overlap=cfg.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
+    deepsort = DeepSort(cfg.DEEPSORT.REID_CKPT,
+                        max_dist=cfg.DEEPSORT.MAX_DIST, max_iou_distance=cfg.DEEPSORT.MAX_IOU_DISTANCE,
                         max_age=cfg.DEEPSORT.MAX_AGE, n_init=cfg.DEEPSORT.N_INIT, nn_budget=cfg.DEEPSORT.NN_BUDGET,
                         use_cuda=True)
-    
     
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run

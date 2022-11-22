@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, './yolov5')
 
 import streamlit as st
+import time
 import IPython
 import argparse
 import os
@@ -45,7 +46,7 @@ data_truck = []
 data_motor = []
 line_pos = 0.6
 
-def detect(opt, stframe, car, bus, truck, motor, line):
+def detect(opt, stframe, car, bus, truck, motor, line, fps_rate):
     out, source, yolo_model, deep_sort_model, show_vid, save_vid, save_txt, imgsz, evaluate, half, project, name, exist_ok= \
         opt.output, opt.source, opt.yolo_model, opt.deep_sort_model, opt.show_vid, opt.save_vid, \
         opt.save_txt, opt.imgsz, opt.evaluate, opt.half, opt.project, opt.name, opt.exist_ok
@@ -127,6 +128,7 @@ def detect(opt, stframe, car, bus, truck, motor, line):
         t2 = time_sync()
         dt[0] += t2 - t1
 
+        prev_time = time.time()
         # Inference
         visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if opt.visualize else False
         pred = model(img, augment=opt.augment, visualize=visualize)
@@ -140,7 +142,6 @@ def detect(opt, stframe, car, bus, truck, motor, line):
         # Process detections
         for i, det in enumerate(pred):  # detections per image
             seen += 1
-            # print('this is det', det[:, 5])
             if webcam:  # batch_size >= 1
                 p, im0, _ = path[i], im0s[i].copy(), dataset.count
                 s += f'{i}: '
@@ -185,7 +186,7 @@ def detect(opt, stframe, car, bus, truck, motor, line):
                         label = f'{id} {names[c]} {conf:.2f}'
                         annotator.box_label(bboxes, label, color=colors(c, True))
                         # count_obj(bboxes,w,h,id, names[c], data_car, data_bus, data_truck, data_motor)
-                        count_obj(bboxes,w,h,id, names[c])
+                        count_obj(bboxes,w,h,id, names[c], line_pos)
                         
                         if save_txt:
                             # to MOT format
@@ -244,13 +245,21 @@ def detect(opt, stframe, car, bus, truck, motor, line):
                         fps, w, h = 60, im0.shape[1], im0.shape[0]
 
                     vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+
                 vid_writer.write(im0)
 
+                # show fps
+                curr_time = time.time()
+                fps_ = curr_time - prev_time
+                fps_ = round(1/round(fps_, 3),1)
+                prev_time = curr_time
+
                 stframe.image(im0, channels="BGR", use_column_width=True)
-                car.write(str(len(data_car)))
-                bus.write(str(len(data_bus)))
-                truck.write(str(len(data_truck)))
-                motor.write(str(len(data_motor)))
+                car.markdown(f"<h3> {str(len(data_car))} </h3>", unsafe_allow_html=True)
+                bus.write(f"<h3> {str(len(data_bus))} </h3>", unsafe_allow_html=True)
+                truck.write(f"<h3> {str(len(data_truck))} </h3>", unsafe_allow_html=True)
+                motor.write(f"<h3> {str(len(data_motor))} </h3>", unsafe_allow_html=True)
+                fps_rate.markdown(f"<h3> {fps_} </h3>", unsafe_allow_html=True)
 
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
@@ -261,8 +270,10 @@ def detect(opt, stframe, car, bus, truck, motor, line):
         if platform == 'darwin':  # MacOS
             os.system('open ' + save_path)
 
-def count_obj(box, w, h, id, label):
-    global data_car, data_bus, data_truck, data_motor, line_pos
+            
+
+def count_obj(box, w, h, id, label, line_pos):
+    global data_car, data_bus, data_truck, data_motor
     center_coordinates = (int(box[0]+(box[2]-box[0])/2) , int(box[1]+(box[3]-box[1])/2))
     if center_coordinates[1] > (h*line_pos):
         if label == 'car' and id not in data_car:
@@ -282,11 +293,11 @@ def reset():
     data_truck = []
     data_motor = []
 
-if __name__ == '__main__':
+def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--yolo_model', nargs='+', type=str, default='best_all.pt', help='model.pt path(s)')
+    parser.add_argument('--yolo_model', nargs='+', type=str, default='best.pt', help='model.pt path(s)')
     parser.add_argument('--deep_sort_model', type=str, default='osnet_x0_25')
-    parser.add_argument('--source', type=str, default='Traffic.mp4', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--source', type=str, default='videos/motor.mp4', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[480], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.5, help='object confidence threshold')
@@ -311,8 +322,10 @@ if __name__ == '__main__':
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
+    return opt
+
+if __name__ == '__main__':
+    opt = parse_opt()
 
     with torch.no_grad():
         detect(opt)
-
-                

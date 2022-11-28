@@ -52,7 +52,7 @@ def detect(opt, stframe, car, bus, truck, motor, line, fps_rate):
         opt.save_txt, opt.imgsz, opt.evaluate, opt.half, opt.project, opt.name, opt.exist_ok
     webcam = source == '0' or source.startswith(
         'rtsp') or source.startswith('http') or source.endswith('.txt')
-
+    sum_fps = 0
     line_pos = line
     save_vid = True
     # initialize deepsort
@@ -253,6 +253,7 @@ def detect(opt, stframe, car, bus, truck, motor, line, fps_rate):
                 fps_ = curr_time - prev_time
                 fps_ = round(1/round(fps_, 3),1)
                 prev_time = curr_time
+                sum_fps += fps_
 
                 stframe.image(im0, channels="BGR", use_column_width=True)
                 car.markdown(f"<h3> {str(len(data_car))} </h3>", unsafe_allow_html=True)
@@ -260,16 +261,16 @@ def detect(opt, stframe, car, bus, truck, motor, line, fps_rate):
                 truck.write(f"<h3> {str(len(data_truck))} </h3>", unsafe_allow_html=True)
                 motor.write(f"<h3> {str(len(data_motor))} </h3>", unsafe_allow_html=True)
                 fps_rate.markdown(f"<h3> {fps_} </h3>", unsafe_allow_html=True)
-
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
+    print("Average FPS", round(1 / (sum(list(t)) / 1000), 1))
     LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS, %.1fms deep sort update \
         per image at shape {(1, 3, *imgsz)}' % t)
     if save_txt or save_vid:
         print('Results saved to %s' % save_path)
         if platform == 'darwin':  # MacOS
             os.system('open ' + save_path)
-
+    
             
 
 def count_obj(box, w, h, id, label, line_pos):
@@ -295,7 +296,7 @@ def reset():
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--yolo_model', nargs='+', type=str, default='best.pt', help='model.pt path(s)')
+    parser.add_argument('--yolo_model', nargs='+', type=str, default='best64.pt', help='model.pt path(s)')
     parser.add_argument('--deep_sort_model', type=str, default='osnet_x0_25')
     parser.add_argument('--source', type=str, default='videos/motor.mp4', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--output', type=str, default='inference/output', help='output folder')  # output folder

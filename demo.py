@@ -28,15 +28,15 @@ if __name__ == '__main__':
     line = st.sidebar.number_input('Line position', min_value=0.0, max_value=1.0, value=0.6, step=0.1)
     st.sidebar.markdown('---')
 
-    custom_class = st.sidebar.checkbox('Custom classes')
+    # custom_class = st.sidebar.checkbox('Custom classes')
     assigned_class_id = []
     names = ['car', 'motorcycle','bus', 'truck']
 
     # custom classes
-    if custom_class:
-        assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
-        for each in assigned_class:
-            assigned_class_id.append(names.index(each))
+    # if custom_class:
+    #     assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
+    #     for each in assigned_class:
+    #         assigned_class_id.append(names.index(each))
     
 
     # st.write(assigned_class_id)
@@ -72,8 +72,10 @@ if __name__ == '__main__':
 
 
     track_button = st.sidebar.button('START')
-    reset_button = st.sidebar.button('RESET ID')
+    # reset_button = st.sidebar.button('RESET ID')
     if track_button:
+        # reset ID and count from 0
+        reset()
         opt = parse_opt()
         opt.conf_thres = confidence
         opt.source = f'videos/{video_file_buffer.name}'
@@ -84,7 +86,6 @@ if __name__ == '__main__':
         status.markdown('<font size= "4"> **Status:** Finished ! </font>', unsafe_allow_html=True)
         # end_noti = st.markdown('<center style="color: blue"> FINISH </center>',  unsafe_allow_html=True)
 
-    # reset ID and count from 0
-    if reset_button:
-        reset()
-        st.markdown('<h3 style="color: blue"> Reseted ID </h3>', unsafe_allow_html=True)
+    # if reset_button:
+        # reset()
+    #     st.markdown('<h3 style="color: blue"> Reseted ID </h3>', unsafe_allow_html=True)

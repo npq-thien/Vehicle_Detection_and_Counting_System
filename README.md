@@ -1,13 +1,12 @@
 # Vehicle Detection and Counting System on Streamlit
 
+![Demo image](Resources/demo.jpg)
+
 ## Introduction
 This project is used to count and detect vehicle on the highway. It can detect 4 types of vehicles: car, motorcycle, bus, truck.
 I run this project on Python 3.9.7
 
-Input: video size should smaller than 200 MB
-
-Output: number of each vehicle type
-## What we use
+#
 * [YOLOv5](https://github.com/ultralytics/yolov5/releases) to detect objects on each of the video frames.
 
 * [Deep SORT](https://github.com/nwojke/deep_sort) to track those objects over different frames and help counting.
@@ -35,5 +34,20 @@ streamlit run demo.py --server.maxUploadSize=500
 pip install streamlit==1.11.0
 ```
 
-# Demo features
-1. Confidence: the confidence that one object belongs to one class
+# DEMO
+
+## Steps:
+1. Click ```Browse files``` to input video
+
+2. Setting *Confidence* and *Line position*
+
+![Settings](Resources/setting.jpg)
+* Confidence: the probability that one object belongs to one class
+
+* Line position: the position of green line, any vehicle have coordinate below the line will be counted
+
+3. Click ```START```
+
+## Result
+
+![demo](Resources/vid_demo.gif)

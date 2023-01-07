@@ -19,11 +19,6 @@ I run this project on Python 3.9.7
 pip install -r requirements.txt
 ```
 
-* Install Streamlit:
-```python
-pip install streamlit
-```
-
 * Run demo:
 ```python
 streamlit run demo.py --server.maxUploadSize=500
@@ -32,6 +27,11 @@ streamlit run demo.py --server.maxUploadSize=500
 **NOTE**: If the web keeps showing "Please wait...", try to install streamlit version 1.11.0
 ```python
 pip install streamlit==1.11.0
+```
+
+If the web shows error "no module easydict"
+```python
+pip install easydict
 ```
 
 # DEMO

@@ -22,24 +22,24 @@ if __name__ == '__main__':
 
     st.sidebar.markdown('---')
     st.sidebar.title('Settings')
+    # custom class
+    custom_class = st.sidebar.checkbox('Custom classes')
+    assigned_class_id = [0, 1, 2, 3]
+    names = ['car', 'motorcycle', 'truck', 'bus']
+
+    if custom_class:
+        assigned_class_id = []
+        assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
+        for each in assigned_class:
+            assigned_class_id.append(names.index(each))
+    
+    # st.write(assigned_class_id)
 
     # setting hyperparameter
     confidence = st.sidebar.slider('Confidence', min_value=0.0, max_value=1.0, value=0.5)
     line = st.sidebar.number_input('Line position', min_value=0.0, max_value=1.0, value=0.6, step=0.1)
     st.sidebar.markdown('---')
 
-    # custom_class = st.sidebar.checkbox('Custom classes')
-    assigned_class_id = []
-    names = ['car', 'motorcycle','bus', 'truck']
-
-    # custom classes
-    # if custom_class:
-    #     assigned_class = st.sidebar.multiselect('Select custom classes', list(names))
-    #     for each in assigned_class:
-    #         assigned_class_id.append(names.index(each))
-    
-
-    # st.write(assigned_class_id)
     
     status = st.empty()
     stframe = st.empty()
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
         status.markdown('<font size= "4"> **Status:** Running... </font>', unsafe_allow_html=True)
         with torch.no_grad():
-            detect(opt, stframe, car_text, bus_text, truck_text, motor_text, line, fps_text)
+            detect(opt, stframe, car_text, bus_text, truck_text, motor_text, line, fps_text, assigned_class_id)
         status.markdown('<font size= "4"> **Status:** Finished ! </font>', unsafe_allow_html=True)
         # end_noti = st.markdown('<center style="color: blue"> FINISH </center>',  unsafe_allow_html=True)
 

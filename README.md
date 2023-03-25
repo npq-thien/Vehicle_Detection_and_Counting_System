@@ -50,4 +50,4 @@ pip install easydict
 
 ## Result
 
-![demo](Resources/vid_demo.gif)
+![demo](Resources/new demo.gif)

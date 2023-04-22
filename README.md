@@ -39,9 +39,11 @@ pip install easydict
 ## Steps:
 1. Click ```Browse files``` to input video
 
-2. Setting *Confidence* and *Line position*
+2. Setting *Custom classes*, *Confidence* and *Line position*
 
 ![Settings](Resources/setting.jpg)
+* Custom classes: choose classes you want to detect
+
 * Confidence: the probability that one object belongs to one class
 
 * Line position: the position of green line, any vehicle have coordinate below the line will be counted
